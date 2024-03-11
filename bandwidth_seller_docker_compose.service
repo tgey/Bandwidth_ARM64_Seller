@@ -1,0 +1,13 @@
+[Unit]
+Description=Docker Compose Application
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=on-failure
+RestartSec=15
+ExecStart=/usr/local/bin/docker-compose -f /home/tgey/Projects/bandwidth_seller/docker-compose.yaml --env-file /home/tgey/Projects/bandwidth_seller/.env up
+ExecStop=/usr/local/bin/docker-compose -f /home/tgey/Projects/bandwidth_seller/docker-compose.yaml --env-file /home/tgey/Projects/bandwidth_seller/.env down
+
+[Install]
+WantedBy=multi-user.target

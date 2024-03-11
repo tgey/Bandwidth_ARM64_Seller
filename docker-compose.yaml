@@ -1,0 +1,163 @@
+version: '3.5'
+
+services:
+    #Start of Portainer + Webserver section :
+    # Web GUI with quicklinks to apps dashboards and help : connect to your device port 80 (Webserver)
+    # Container management and monitoring : connect to your device port 9000 (Portainer)
+    # Webserver:
+    #     image: arm64v8/httpd
+    #     volumes:
+    #         - ./www:/www
+    #     ports:
+    #         - 81:81
+    #     restart: always
+    #     networks:
+    #         default:
+    #             ipv4_address: 172.106.0.10
+    # Portainer:
+    #     image: portainer/portainer-ce:latest
+    #     volumes:
+    #         - /var/run/docker.sock:/var/run/docker.sock
+    #         - portainer_data:/data
+    #     ports:
+    #         - 8000:8000
+    #         - 9000:9000
+    #         - 9443:9443
+    #     restart: always
+    #     networks:
+    #         default:
+    #             ipv4_address: 172.106.0.11
+    #End of Portainer + Webserver section
+
+    #Start of Earnapp section (remove this if Earnapp not wanted)
+    Earnapp:
+        # depends_on:
+        #     - Portainer
+        #     - Webserver
+        image: fazalfarhan01/earnapp:lite
+        container_name: Earnapp
+        volumes:
+            - /sys/fs/cgroup:/sys/fs/cgroup:ro
+            - earnapp-data:/etc/earnapp
+        environment: 
+            EARNAPP_UUID: $EARNAPP_UUID
+        privileged: true
+        restart: always
+        networks:
+            default:
+                ipv4_address: 172.106.0.20
+    #End of Earnapp section
+
+    #Start of HoneyGain section (remove this if HoneyGain not wanted)
+    # variables to define in .env file :
+    # HONEYGAIN_EMAIL : Your Honeygain account email
+    # HONEYGAIN_PASSWD : Your Honeygain account password 
+    # DEVICE_NAME : This computer name (for display on dashboard)
+    Honeygain:
+        # depends_on:
+        #     - Portainer
+        #     - Webserver
+        image: honeygain/honeygain
+        container_name: Honeygain
+        command: -tou-accept -email $HONEYGAIN_EMAIL -pass '$HONEYGAIN_PASSWD' -device $DEVICE_NAME
+        restart: always
+        networks:
+            default:
+                ipv4_address: 172.106.0.30
+    #End of HoneyGain section
+
+    #Start of IproyalPawns section (remove this if IproyalPawns not wanted)
+    # variables to define in .env file :
+    # IPROYALPAWNS_EMAIL : email@email.com
+    # IPROYALPAWNS_PASSWD : Password
+    # DEVICE_NAME : DeviceName
+    IproyalPawns:
+        # depends_on:
+        #     - Portainer
+        #     - Webserver
+        image: iproyal/pawns-cli
+        container_name: Pawns
+        command: -email=$IPROYALPAWNS_EMAIL -password='$IPROYALPAWNS_PASSWD' -device-name=$DEVICE_NAME -accept-tos
+        restart: always
+        networks:
+            default:
+                ipv4_address: 172.106.0.140
+    #End of IproyalPawns section
+
+    #Start of Peer2profit section (remove this if Peer2profit not wanted)
+    # variables to define in .env file :
+    # PEER2PROFIT_EMAIL : email@email.com
+    # Peer2profit:
+    #     # depends_on:
+    #     #     - Portainer
+    #     #     - Webserver
+    #     image: peer2profit/peer2profit_linux
+    #     restart: always
+    #     environment:
+    #         - P2P_EMAIL=$PEER2PROFIT_EMAIL
+    #     networks:
+    #         default:
+    #             ipv4_address: 172.106.0.50
+    #End of Peer2profit section
+
+    #Start of Repocket section (remove this if Peer2profit not wanted)
+    # variables to define in .env file :
+    # RP_EMAIL=email@email.com
+    # RP_API_KEY=your_api_key
+    Repocket:
+        # depends_on:
+        #     - Portainer
+        #     - Webserver
+        image: repocket/repocket
+        container_name: Repocket
+        restart: always
+        environment:
+            - RP_EMAIL=$RP_EMAIL
+            - RP_API_KEY=$RP_API_KEY
+        networks:
+            default:
+                ipv4_address: 172.106.0.50
+    #End of Peer2profit section
+
+    #Start of Packetstream section (remove this if Packetstream not wanted)
+    # variables to define in .env file :
+    # PACKETSTREAM_CID : Your Packetstream CID (available in packetstream dashboard)
+    psclient:
+        # depends_on:
+        #     - Portainer
+        #     - Webserver
+        image: packetstream/psclient:latest
+        container_name: psclient
+        restart: always
+        environment:
+            - CID=$PACKETSTREAM_CID
+        networks:
+            default:
+                ipv4_address: 172.106.0.60
+    watchtower:
+        depends_on:
+            # - Portainer
+            # - Webserver
+            - psclient
+        image: containrrr/watchtower
+        container_name: psclient_watchtower
+        command: --cleanup --include-stopped --revive-stopped --interval 60 psclient
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        restart: always
+        networks:
+            default:
+                ipv4_address: 172.106.0.61
+    #End of Packetstream section
+
+volumes:
+    # portainer_data:
+    earnapp-data:
+
+networks:
+    default:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.106.0.0/16
